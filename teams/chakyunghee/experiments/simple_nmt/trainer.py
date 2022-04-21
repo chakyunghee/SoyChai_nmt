@@ -24,45 +24,45 @@ class MaximumLikelihoodEstimationEngine(Engine):
         super().__init__(func)
 
         self.best_loss = np.inf
-        self.scaler = GradScaler()
+        self.scaler = GradScaler()          # amp. autocast.
 
-    @staticmethod
-    def train(engine, mini_batch):          # process function(ignite에 등록 됨)
-        engine.model.train()                # gradient accumulation
+    @staticmethod                           # process function(ignite에 등록)
+    def train(engine, mini_batch):          # gradient accumulation(마치 배치사이즈 큰 것처럼)
+        engine.model.train()                # iteration_per_update == 32, 32로 나눈 나머지가 1일 때마다의 iteration에서 zero_grad()
         if engine.state.iteration % engine.config.iteration_per_update == 1 or \
-            engine.config.iteration_per_update == 1:    # 매번 업뎃
+            engine.config.iteration_per_update == 1:    # <-- 매번 업뎃
             if engine.state.iteration > 1:
-                engine.optimizer.zero_grad()
+                engine.optimizer.zero_grad()            
 
-        device = next(engine.model.parameter()).device
-        mini_batch.src = (mini_batch.src[0].to(device), mini_batch.src[1])
+        device = next(engine.model.parameters()).device
+        mini_batch.src = (mini_batch.src[0].to(device), mini_batch.src[1])  # torchtext로부터.
         mini_batch.tgt = (mini_batch.tgt[0].to(device), mini_batch.tgt[1])
 
         x, y = mini_batch.src, mini_batch.tgt[0][:, 1:]
 
-        with autocast(not engine.config.off_autocast):  # AMP 쓸 것임
+        with autocast(not engine.config.off_autocast):  # amp, gpu working only
             y_hat = engine.model(x, mini_batch.tgt[0][:, :-1])
-            loss = engine.crit(
+            loss = engine.crit(         # 실제 화면 출력 loss
                 y_hat.contiguous().view(-1, y_hat.size(-1)),
                 y.contiguous().view(-1)
             )                                          # gradient accumulation했기 때문
-            backward_target = loss.div(y.size(0)).div(engine.config.iteration_per_update) # gradient descent 수행할 애.
+            backward_target = loss.div(y.size(0)).div(engine.config.iteration_per_update) # <-- gradient descent 수행할 애.
 
         if engine.config.gpu_id >= 0 and not engine.config.off_autocast:
             engine.scaler.scale(backward_target).backward() # 안정적 backprop
         else:
             backward_target.backward()
 
-        word_count = int(mini_batch.tgt[1].sum())
+        word_count = int(mini_batch.tgt[1].sum())       # sample별 length의 sum
 
         if engine.state.iteration % engine.config.iteration_per_update == 0 and \
-            engine.state.iteration > 0:
+            engine.state.iteration > 0:     # iteration_per_update==32 32의 배수마다 gradient update
 
-            torch_utils.clip_grad_norm(     # gradient clipping
-                engine.model.parameters(),
-                engine.config.max_grad_norm()
-            )
-            if engine.config.gpu_id >= 0 and engine.config.off_autocast:    # <---
+ #           torch_utils.clip_grad_norm(     # gradient clipping(얘 빼도 되는거 아닌지)
+ #               engine.model.parameters(),
+ #               engine.config.max_grad_norm()
+ #           )
+            if engine.config.gpu_id >= 0 and engine.config.off_autocast:    # gpu
                 engine.scaler.step(engine.optimizer)
                 engine.scaler.update()  
             else:
@@ -76,7 +76,7 @@ class MaximumLikelihoodEstimationEngine(Engine):
             'ppl': ppl}
 
     @staticmethod
-    def validation(engine, mini_batch):
+    def validate(engine, mini_batch):
         engine.model.eval()
 
         with torch.no_grad():
@@ -84,7 +84,7 @@ class MaximumLikelihoodEstimationEngine(Engine):
             mini_batch.src = (mini_batch.src[0].to(device), mini_batch.src[1])
             mini_batch.tgt = (mini_batch.tgt[0].to(device), mini_batch.tgt[1])
 
-            x, y = mini_batch.src, mini_batch.tgt[0][:, 1:] # <BOS>제외 <---------확인
+            x, y = mini_batch.src, mini_batch.tgt[0][:, 1:] # <eos> <bos> <---
 
             with autocast(not engine.config.off_autocast):
                 y_hat = engine.model(x, mini_batch.tgt[0][:, :-1])
@@ -180,7 +180,7 @@ class MaximumLikelihoodEstimationEngine(Engine):
 class SingleTrainer():
 
     def __init__(self, target_engine_class, config):
-        self.target_engine_class = target_engine_class
+        self.target_engine_class = target_engine_class  # MLEE를 여기에 넣어줌/
         self.config = config
 
     def train(
@@ -229,13 +229,17 @@ class SingleTrainer():
             self.target_engine_class.resume_training,
             self.config.init_epoch
         )
+
+        validation_engine.add_event_handler(
+            Events.EPOCH_COMPLETED, self.target_engine_class.check_best
+        )
         validation_engine.add_event_handler(
             Events.EPOCH_COMPLETED,
             self.target_engine_class.save_model,
             train_engine,
             self.config,
             src_vocab,
-            tgt_vocab
+            tgt_vocab,
         )
         
         train_engine.run(train_loader, max_epochs=n_epochs)

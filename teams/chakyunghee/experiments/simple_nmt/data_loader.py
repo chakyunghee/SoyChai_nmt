@@ -38,7 +38,7 @@ class DataLoader():
             use_vocab=True,
             batch_first=True,
             include_lengths=True,
-            fix_lenght=fix_length,
+            fix_length=fix_length,
             init_token='<BOS>' if use_bos else None,
             eos_token='<EOS>' if use_eos else None
         )

@@ -55,7 +55,7 @@ class MultiHead(nn.Module):
             mask = mask,
             dk = self.hidden_size // self.n_splits
         )
-        c = c.splits(Q.size(0), dim=0)
+        c = c.split(Q.size(0), dim=0)
         c = self.linear(torch.cat(c, dim=-1))
         
         return c

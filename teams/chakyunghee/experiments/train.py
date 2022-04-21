@@ -4,7 +4,7 @@ import argparse
 import pprint
 
 import torch
-from torch import optim
+#from torch import optim
 import torch.nn as nn
 
 import torch_optimizer as custom_optim
@@ -42,8 +42,10 @@ def define_argparser(is_continue=False):
     p.add_argument('--max_length', type=int, default=100, help='Maximum length of the training sequence. Default=%(default)s')
 
     p.add_argument('--dropout', type=float, default=.2, help='Dropout rate. Default=%(default)s')
-    
-    #p.add_argument('--max_grad_norm', type=float, default=5., help='Threshold for gradient clipping in case of SGD, default 1e+8 using (r)adam meaning no need to use max_grad_norm. Default=%(default)s')
+    p.add_argument('--hidden_size', type=int, default=768, help='Hidden size of Model. Default=%(default)s')
+    p.add_argument('--n_layers', type=int, default=4, help='Number of layers in Model. Default=%(default)s')    
+
+    p.add_argument('--max_grad_norm', type=float, default=5., help='Threshold for gradient clipping in case of SGD, default 1e+8 using (r)adam meaning no need to use max_grad_norm. Default=%(default)s')
     p.add_argument('--iteration_per_update', type=int, default=1, help='Number of feed-forward iterations for one parameter update. Default=%(default)s')
 
     p.add_argument('--lr', type=float, default=1., help='Initial learning rate. Default=%(default)s')
@@ -53,7 +55,7 @@ def define_argparser(is_continue=False):
 #    p.add_argument('--lr_decay_start', type=int, default=10, help='Learning rate decay start at. Default=%(default)s')
 
 
-    p.add_argument('--use_radam', action='store_ture', help='Use rectified Adam as optimizer. Other lr arguments should be changed.')
+    p.add_argument('--use_radam', action='store_true', help='Use rectified Adam as optimizer. Other lr arguments should be changed.')
     p.add_argument('--use_transformer', action='store_true', help='Set model architecture as Transformer.')
     p.add_argument('--n_splits', type=int, default=8, help='Number of heads in multi-head attentionin Transformer. Default=%(default)s')
 
@@ -69,10 +71,10 @@ def get_model(input_size, output_size, config):
             input_size,                     # src lang vocab size
             config.hidden_size,
             output_size,                    # tgt lang vocab size
-            n_splits=config.n_splits,       # 8, argument
-            n_enc_blocks=config.n_layers,   # 6, transformer.py
-            n_dec_blocks=config.n_layers,   # 6, transformer.py
-            dropout_p=config.dropout,       # .1, transformer.py
+            n_splits=config.n_splits,       # 8, config
+            n_enc_blocks=config.n_layers,   # 4, config
+            n_dec_blocks=config.n_layers,   # 4, config
+            dropout_p=config.dropout,       # .2, config
         )
     else:
         raise Exception('Set model architecture as Transformer.')
@@ -168,7 +170,7 @@ def main(config, model_weight=None, opt_weight=None):
         src_vocab=loader.src.vocab,
         tgt_vocab=loader.tgt.vocab,
         n_epochs=config.n_epochs,
-    #    lr_scheduler=lr_scheduler,
+#        lr_scheduler=lr_scheduler,
     )
 
 
