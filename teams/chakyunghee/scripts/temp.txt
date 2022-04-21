@@ -1,0 +1,1 @@
+create bash script(shell script) for starting preprocess modules or ML training&evaluation modules 
