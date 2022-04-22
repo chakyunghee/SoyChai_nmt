@@ -12,7 +12,7 @@ VERBOSE_SILENT = 0
 VERBOSE_EPOCH_WISE = 1
 VERBOSE_BATCH_WISE = 2
 
-class MaximumLikelihoodEstimationEngine(Engine):
+class MaximumLikelihoodEstimationEngine(Engine):    # teacher forcing으로 모델 학습
 
     def __init__(self, func, model, crit, optimizer, lr_scheduler, config):
         self.model = model
@@ -38,42 +38,46 @@ class MaximumLikelihoodEstimationEngine(Engine):
         mini_batch.src = (mini_batch.src[0].to(device), mini_batch.src[1])  # torchtext로부터.
         mini_batch.tgt = (mini_batch.tgt[0].to(device), mini_batch.tgt[1])
 
-        x, y = mini_batch.src, mini_batch.tgt[0][:, 1:]
+        x, y = mini_batch.src, mini_batch.tgt[0][:, 1:]         # 정답인 애, <bos> 뺀 애, <eos> 포함
 
-        with autocast(not engine.config.off_autocast):  # amp, gpu working only
-            y_hat = engine.model(x, mini_batch.tgt[0][:, :-1])
-            loss = engine.crit(         # 실제 화면 출력 loss
+        with autocast(not engine.config.off_autocast):          # amp, gpu working only
+            y_hat = engine.model(x, mini_batch.tgt[0][:, :-1])  # 모델에 넣어줌, <eos> 뺌
+            loss = engine.crit(                                 # 실제 화면 출력 loss, 여기서 정답과 y_hat비교
                 y_hat.contiguous().view(-1, y_hat.size(-1)),
                 y.contiguous().view(-1)
-            )                                          # gradient accumulation했기 때문
-            backward_target = loss.div(y.size(0)).div(engine.config.iteration_per_update) # <-- gradient descent 수행할 애.
+            )                                                   # train.py 에 crit의 reduction=sum이라 나눠주기
+            backward_target = loss.div(y.size(0)).div(engine.config.iteration_per_update) # <-- gradient descent 수행 back porp할 애.
 
         if engine.config.gpu_id >= 0 and not engine.config.off_autocast:
-            engine.scaler.scale(backward_target).backward() # 안정적 backprop
+            engine.scaler.scale(backward_target).backward()     # 안정적 backprop
         else:
             backward_target.backward()
 
-        word_count = int(mini_batch.tgt[1].sum())       # sample별 length의 sum
+        word_count = int(mini_batch.tgt[1].sum())               # sample별 length의 sum
 
         if engine.state.iteration % engine.config.iteration_per_update == 0 and \
-            engine.state.iteration > 0:     # iteration_per_update==32 32의 배수마다 gradient update
+            engine.state.iteration > 0:                         # iteration_per_update==32 32의 배수마다 gradient update
 
- #           torch_utils.clip_grad_norm(     # gradient clipping(얘 빼도 되는거 아닌지)
- #               engine.model.parameters(),
- #               engine.config.max_grad_norm()
- #           )
-            if engine.config.gpu_id >= 0 and engine.config.off_autocast:    # gpu
+            torch_utils.clip_grad_norm_(
+                engine.model.parameters(),
+                engine.config.max_grad_norm
+            )
+            if engine.config.gpu_id >= 0 and engine.config.off_autocast:
                 engine.scaler.step(engine.optimizer)
                 engine.scaler.update()  
             else:
                 engine.optimizer.step()
 
-        loss = float(loss/word_count)
+#            if engine.config.use_noam_decay and engine.lr_scheduler is not None:    # transformer
+#                engine.lr_scheduler.step()
+
+        loss = float(loss/word_count)       # 단어당 loss
         ppl = np.exp(loss)
 
         return {
             'loss': loss,
-            'ppl': ppl}
+            'ppl': ppl
+            }
 
     @staticmethod
     def validate(engine, mini_batch):
@@ -84,7 +88,7 @@ class MaximumLikelihoodEstimationEngine(Engine):
             mini_batch.src = (mini_batch.src[0].to(device), mini_batch.src[1])
             mini_batch.tgt = (mini_batch.tgt[0].to(device), mini_batch.tgt[1])
 
-            x, y = mini_batch.src, mini_batch.tgt[0][:, 1:] # <eos> <bos> <---
+            x, y = mini_batch.src, mini_batch.tgt[0][:, 1:]
 
             with autocast(not engine.config.off_autocast):
                 y_hat = engine.model(x, mini_batch.tgt[0][:, :-1])
@@ -136,7 +140,7 @@ class MaximumLikelihoodEstimationEngine(Engine):
             def print_valid_logs(engine):
                 avg_loss = engine.state.metrics['loss']
 
-                print('Validation - loss{:.4e} ppl={:.2f} best_loss={:.4e} best_ppl={:.2f}'.format(
+                print('Validation - loss={:.4e} ppl={:.2f} best_loss={:.4e} best_ppl={:.2f}'.format(
                     avg_loss,
                     np.exp(avg_loss),
                     engine.best_loss,
@@ -144,7 +148,7 @@ class MaximumLikelihoodEstimationEngine(Engine):
                 ))
     
     @staticmethod
-    def resume_training(engine, resume_epoch):
+    def resume_training(engine, resume_epoch):          # 학습 끊기고 난 뒤 재개할 때
         engine.state.iteration = (resume_epoch - 1) * len(engine.state.dataloader)
         engine.state.epoch = (resume_epoch - 1)
     
@@ -155,8 +159,8 @@ class MaximumLikelihoodEstimationEngine(Engine):
             engine.best_loss = loss
 
     @staticmethod
-    def save_model(engine, train_engine, config, src_vocab, tgt_vocab):
-        avg_train_loss = train_engine.state.metrics['loss']
+    def save_model(engine, train_engine, config, src_vocab, tgt_vocab): # PPL 낮더라도 번역 품질이 보장되는건 아니므로 모든 epochs 결과물 다 저장해놓음
+        avg_train_loss = train_engine.state.metrics['loss']             # 나중에 evaluation할 때 보려고.
         avg_valid_loss = engine.state.metrics['loss']
 
         model_fn = config.model_fn.split('.')
@@ -180,7 +184,7 @@ class MaximumLikelihoodEstimationEngine(Engine):
 class SingleTrainer():
 
     def __init__(self, target_engine_class, config):
-        self.target_engine_class = target_engine_class  # MLEE를 여기에 넣어줌/
+        self.target_engine_class = target_engine_class
         self.config = config
 
     def train(
@@ -213,9 +217,9 @@ class SingleTrainer():
             verbose=self.config.verbose
         )
         def run_validation(engine, validation_engine, valid_loader):
-            validation_engine.run(valid_loader, max_epochs=1)
+            validation_engine.run(valid_loader, max_epochs=1)       
 
-            if engine.lr_scheduler is not None:
+            if engine.lr_scheduler is not None and not engine.config.use_noam_decay:
                 engine.lr_scheduler.step()
         
         train_engine.add_event_handler(
@@ -225,7 +229,7 @@ class SingleTrainer():
             valid_loader
         )
         train_engine.add_event_handler(
-            Events.STARTED,
+            Events.STARTED,                             # 재개하는 애 등록
             self.target_engine_class.resume_training,
             self.config.init_epoch
         )

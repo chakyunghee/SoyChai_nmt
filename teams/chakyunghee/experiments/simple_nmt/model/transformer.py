@@ -308,7 +308,7 @@ class Transformer(nn.Module):
             
             y_t_1 = y_t_1.masked_fill_(
                 ~is_decoding,
-                data_loader.PAD,
+                data_loader.PAD
             )
             is_decoding = is_decoding * torch.ne(y_t_1, data_loader.EOS)
             indice += [y_t_1]

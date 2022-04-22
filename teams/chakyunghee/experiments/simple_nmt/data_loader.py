@@ -15,7 +15,7 @@ class DataLoader():
                  device='cpu',
                  max_vocab=99999999,
                  max_length=255,
-                 fix_length=None,   # < ---?
+                 fix_length=None,   # <---?
                  use_bos=True,
                  use_eos=True,
                  shuffle=True
@@ -46,7 +46,7 @@ class DataLoader():
         if train_fn is not None and valid_fn is not None and exts is not None:      
             train = TranslationDataset(
                 path=train_fn,
-                exts=exts,  # 확장자 en/ko (영한)튜플로.
+                exts=exts,                                      # 확장자 en/ko (영한)튜플로.
                 fields=[('src', self.src), ('tgt', self.tgt)],  # (en, ko)
                 max_length=max_length
             )
@@ -56,10 +56,10 @@ class DataLoader():
                 fields=[('src', self.src), ('tgt', self.tgt)],
                 max_length=max_length
             )
-            self.train_iter = data.BucketIterator(
+            self.train_iter = data.BucketIterator(              # dataset 가져와서 pad채운 tensor만듦
                 train,
                 batch_size=batch_size,
-                device='cude:%d' % device if device >= 0 else 'cpu',
+                device='cuda:%d' % device if device >= 0 else 'cpu',
                 shuffle=shuffle,
                 sort_key=lambda x: len(x.tgt) + (max_length * len(x.src)),
                 sort_within_batch=True
@@ -72,7 +72,7 @@ class DataLoader():
                 sort_key=lambda x: len(x.tgt) + (max_length * len(x.src)),
                 sort_within_batch=True
             )
-            self.src.build_vocab(train, max_size=max_vocab)
+            self.src.build_vocab(train, max_size=max_vocab)     # 단어와 index mapping
             self.tgt.build_vocab(train, max_size=max_vocab)
 
     def load_vocab(self, src_vocab, tgt_vocab):
@@ -80,7 +80,7 @@ class DataLoader():
         self.tgt.vocab = tgt_vocab
 
 
-class TranslationDataset(data.Dataset):
+class TranslationDataset(data.Dataset):     # 문장 너무 길 때 max_length로 잘라주는 방법 적용한 코드
 
     @staticmethod
     def sort_key(ex):
@@ -90,6 +90,7 @@ class TranslationDataset(data.Dataset):
 
         if not isinstance(fields[0], (tuple, list)):
             fields = [('src', fields[0]), ('trg', fields[1])]
+        
         if not path.endswith('.'):
             path += '.'
 
