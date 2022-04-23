@@ -298,7 +298,7 @@ class Transformer(nn.Module):
                 else:
                     prevs[layer_index + 1] = torch.cat([prevs[layer_index + 1], h_t], dim=1)
 
-            y_hat_t = self.henerator(h_t)
+            y_hat_t = self.generator(h_t)
 
             y_hats += [y_hat_t]
             if is_greedy:

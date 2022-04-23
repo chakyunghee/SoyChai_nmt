@@ -1,1 +1,53 @@
 create bash script(shell script) for starting preprocess modules or ML training&evaluation modules 
+
+0. data preparation
+0-1) en: tokenization using mosetokenizer in tokenizer_new.py
+cat train.en | python tokenizer_new.py | python post_tokenize.py train.en > train.tok.en
+cat test.en | python tokenizer_new.py | python post_tokenize.py test.en > test.tok.en
+
+0-2) en: learn and apply bpe
+python ./subword-nmt/learn_bpe.py --input train.tok.en --output bpe.en.model --symbols 50000 --verbose
+cat train.tok.en | python subword-nmt/apply_bpe.py -c ./bpe.en.model > train.tok.bpe.en
+cat test.tok.en | python subword-nmt/apply_bpe.py -c ./bpe.en.model > test.tok.bpe.en
+
+0-3) ko: tokenization using mecab
+cat train.ko | mecab -O wakati | python post_tokenize.py train.ko > train.tok.ko
+cat test.ko | mecab -O wakati | python post_tokenize.py test.ko > test.tok.ko
+
+0-4) ko: learn and apply bpe
+python ./subword-nmt/learn_bpe.py --input train.tok.ko --output bpe.ko.model --symbols 30000 --verbose
+cat train.tok.ko | python subword-nmt/apply_bpe.py -c ./bpe.ko.model > train.tok.bpe.ko
+cat test.tok.ko | python subword-nmt/apply_bpe.py -c ./bpe.ko.model > test.tok.bpe.ko
+
+0-5) data split:
+train.tok.bpe.* split into two, train.tok.bpe.* and valid.tok.bpe.*
+test.tok.bpe.* remain
+
+1000000 ./train.tok.bpe.en
+1000000 ./train.tok.bpe.ko
+210529 ./valid.tok.bpe.en
+210529 ./valid.tok.bpe.ko
+151316 ./test.tok.bpe.en
+151316 ./test.tok.bpe.ko
+
+
+
+1. model training
+python train.py --train /content/SoyChai_nmt/data/train.tok.bpe --valid /content/SoyChai_nmt/data/valid.tok.bpe --lang enko --gpu_id 0 --batch_size 128 --n_epochs 30 --max_length 64 --dropout .2 --hidden_size 768 --n_layers 4 --max_grad_norm 1e+8 --iteration_per_update 32 --lr 1e-3 --lr_step 0 --use_adam --use_transformer --model_fn /content/SoyChai_nmt/teams/chakyunghee/experiments/simple_nmt/models/enko.transformer.bs-128.max_length-64.dropout-0.2.hs-768.n_layers-4.iter_per_update-32.adam.pth
+1-1) performance is zero:
+still working on it
+
+
+
+2. inference
+using model weight file:
+enko.transformer.bs-128.max_length-64.dropout-0.2.hs-768.n_layers-4.iter_per_update-32.adam.30.5.31-202.26.5.56-258.84.pth
+
+2-1) NOT taking mini-batch parallelized beam search:
+an error does not occured but experiment's failed
+head -n 5 /content/SoyChai_nmt/data/test.tok.bpe.en | python translate.py --model_fn /content/SoyChai_nmt/teams/chakyunghee/experiments/simple_nmt/models/enko.transformer.bs-128.max_length-64.dropout-0.2.hs-768.n_layers-4.iter_per_update-32.adam.30.5.31-202.26.5.56-258.84.pth --gpu_id 0 --batch_size 2 --beam_size 1 | python /content/SoyChai_nmt/teams/chakyunghee/preprocess/detokenizer.py
+
+2-2) Take mini-batch parallelized beam search:
+errors have occured and analyzing it
+
+
