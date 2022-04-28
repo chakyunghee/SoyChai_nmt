@@ -120,7 +120,7 @@ class DecoderBlock(nn.Module):
         self.fc_dropout = nn.Dropout(dropout_p)
 
 
-    def forward(self, x, key_and_value, mask, prev, future_mask):   # prev가 무엇?
+    def forward(self, x, key_and_value, mask, prev, future_mask):   # prev: 
 
         if prev is None:    # training mode
             z = self.masked_attn_norm(x)
@@ -145,7 +145,7 @@ class DecoderBlock(nn.Module):
 
 class MySequential(nn.Sequential):
 
-    def forward(self, *x):
+    def forward(self, *x):      # 입력, 출력 튜플. 여러개 받도록, nn.Sequential 상속 + forward함수
         for module in self._modules.values():
             x = module(*x)
         
@@ -179,7 +179,7 @@ class Transformer(nn.Module):
         self.emb_dec = nn.Embedding(output_size, hidden_size)
         self.emb_dropout = nn.Dropout(dropout_p)
 
-        self.pos_enc = self._generate_pos_enc(hidden_size, max_length)
+        self.pos_enc = self._generate_pos_enc(hidden_size, max_length)  # 엄청 큰거 만들어놓고 필요한 부분만큼 잘라서 쓸.
 
         self.encoder = MySequential(
             *[EncoderBlock(
@@ -216,7 +216,7 @@ class Transformer(nn.Module):
         assert x.size(-1) == self.pos_enc.size(-1)
         assert x.size(1) + init_pos <= self.max_length
 
-        pos_enc = self.pos_enc[init_pos:init_pos + x.size(1)].unsqueeze(0)
+        pos_enc = self.pos_enc[init_pos:init_pos + x.size(1)].unsqueeze(0)  # 추론시 decoder에 하나씩 들어가므로 position 잡아주기
         x = x + pos_enc.to(x.device)
 
         return x
@@ -241,11 +241,11 @@ class Transformer(nn.Module):
     
     def forward(self, x, y):
         with torch.no_grad():
-            mask = self._generate_mask(x[0], x[1])
+            mask = self._generate_mask(x[0], x[1])  # x[0]: encoding onehot tensor, x[1]: minibatch sample별 time-step
             x = x[0]
 
-            mask_enc = mask.unsqueeze(1).expand(*x.size(), mask.size(-1))
-            mask_dec = mask.unsqueeze(1).expand(*y.size(), mask.size(-1))
+            mask_enc = mask.unsqueeze(1).expand(*x.size(), mask.size(-1))   # encoder에서 self-attention
+            mask_dec = mask.unsqueeze(1).expand(*y.size(), mask.size(-1))   # decoder에서 encoder로 attention 
 
         z = self.emb_dropout(self._position_encoding(self.emb_enc(x)))
         z, _ = self.encoder(z, mask_enc)
@@ -262,55 +262,57 @@ class Transformer(nn.Module):
 
         return y_hat
 
-    def search(self, x, is_greedy=True, max_length=255):
+    # inference
+    def search(self, x, is_greedy=True, max_length=255):    # search하는 방법: greedy decoding or random sampling
         batch_size = x[0].size(0)
-        mask = self._generate_mask(x[0], x[1])
+        mask = self._generate_mask(x[0], x[1])  # encoder의 빈 time-step에 pad가 있는 곳에 mask
         x = x[0]
 
-        mask_enc = mask.unsqueeze(1).expand(mask.size(0), x.size(1), mask.size(-1))
-        mask_dec = mask.unsqueeze(1)
+        mask_enc = mask.unsqueeze(1).expand(mask.size(0), x.size(1), mask.size(-1))      # (bs, n, n)
+        mask_dec = mask.unsqueeze(1)            # (bs, 1, n), 왜냐면 추론은 한 time-step씩 이루어지므로                            
 
         z = self.emb_dropout(self._position_encoding(self.emb_enc(x)))
-        z, _ = self.encoder(z, mask_enc)
+        z, _ = self.encoder(z, mask_enc)        # (bs, n, hs), encoder 결과값 z에 attention 적용
 
-        y_t_1 = x.new(batch_size, 1).zero_() + data_loader.BOS
-        is_decoding = x.new_ones(batch_size, 1).bool()
-
-        prevs = [None for _ in range(len(self.decoder._modules) + 1)]
-        y_hats, indice = [], []
+        y_t_1 = x.new(batch_size, 1).zero_() + data_loader.BOS  # decoder embedding y의 첫 timestep엔 BOS 넣어야함
+        is_decoding = x.new_ones(batch_size, 1).bool()  # EOS가 안나온 경우: is_decoding True (decoding중)
+                                                        # EOS가 나온 경우: is_decoding False  (decoding끝)      
+        prevs = [None for _ in range(len(self.decoder._modules) + 1)]   # 이전 time-step의 결과물들 넣는 list
+        y_hats, indice = [], []     # 앞으로 생성할 것들 저장할 [] initialize
 
         while is_decoding.sum() > 0 and len(indice) < max_length:
             h_t = self.emb_dropout(
                 self._position_encoding(self.emb_dec(y_t_1), init_pos=len(indice))
             )
             if prevs[0] is None:
-                prevs[0] = h_t
+                prevs[0] = h_t      # (bs, 1, hs)
             else:
                 prevs[0] = torch.cat([prevs[0], h_t], dim=1)
 
             for layer_index, block in enumerate(self.decoder._modules.values()):
-                prev = prevs[layer_index]
-
-                h_t, _, _, _, _ = block(h_t, z, mask_dec, prev, None)
-
+                prev = prevs[layer_index]                               # h_t: 이전 layer로부터 온 결과값
+                                                                        # mask_dec: encoder source sentence의 빈 timestep의 mask
+                h_t, _, _, _, _ = block(h_t, z, mask_dec, prev, None)   # future mask는 none
+                                                                        # z: encoder output, key and value
                 if prevs[layer_index + 1] is None:
                     prevs[layer_index + 1] = h_t
-                else:
+                else:                                # 이번 lyaer에 나온 결과값 h_t를 concat해서 붙인 후 다음 attention에 씀
                     prevs[layer_index + 1] = torch.cat([prevs[layer_index + 1], h_t], dim=1)
 
-            y_hat_t = self.generator(h_t)
+            y_hat_t = self.generator(h_t)   # 단어별 로그 확률값
 
-            y_hats += [y_hat_t]
+            y_hats += [y_hat_t]     # 모으기
             if is_greedy:
                 y_t_1 = torch.topk(y_hat_t, 1, dim=-1)[1].squeeze(-1)
-            else:
+            else:       # random sampling
                 y_t_1 = torch.multinomial(y_hat_t.exp().view(x.size(0), -1), 1)
-            
-            y_t_1 = y_t_1.masked_fill_(
-                ~is_decoding,
+            # y_t_1이 다음 time-step에 또 쓰이기위해 위로 올라감
+            y_t_1 = y_t_1.masked_fill_( # 이전 time-step에 EOS가 나온(false) 경우, decoding 끝난 애들은 pad
+                ~is_decoding,   
                 data_loader.PAD
             )
-            is_decoding = is_decoding * torch.ne(y_t_1, data_loader.EOS)
+            # 이번 time-step에 EOS인 경우, 해당 sample에 대해 false로 바꾸어서 다음 코드 돌 때 이 sample에 pad 걸리게 됨                                                              
+            is_decoding = is_decoding * torch.ne(y_t_1, data_loader.EOS)    
             indice += [y_t_1]
 
         y_hats = torch.cat(y_hats, dim=1)
@@ -323,7 +325,7 @@ class Transformer(nn.Module):
         x,
         beam_size=5,
         max_length=255,
-        n_best=1,
+        n_best=1,       # 기존 search는 1 batch_beam_search면 적어도 beam_size만큼
         length_penalty=.2
     ):
         batch_size = x[0].size(0)

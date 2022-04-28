@@ -22,7 +22,7 @@ def define_argparser():
     
     p.add_argument('--n_best', type=int, default=1, help='Number of best inference result per sample. Default=%(default)s')    
     p.add_argument('--beam_size', type=int, default=5, help='Beam size for beam search. Default=%(default)s')
-    
+    # beam search 실행 안할거면 beam_size 1
     p.add_argument('--lang', type=str, default=None, help='Source language and target language. Example: enko')
     p.add_argument('--length_penalty', type=float, default=1.2, help='Length penalty parameter that higher value produce shorter results. Default=%(default)s')
 
@@ -62,12 +62,12 @@ def to_text(indice, vocab):
                 # line += ['<EOS>']
                 break
             else:
-                line += [vocab.itos[index]]
+                line += [vocab.itos[index]]     # index to text(string)
 
         line = ' '.join(line)
         lines += [line]
 
-    return lines
+    return lines        # bpe된 형태로 return
 
 
 
@@ -76,7 +76,7 @@ def get_vocabs(train_config, config, saved_data):
     src_vocab = saved_data['src_vocab']
     tgt_vocab = saved_data['tgt_vocab']
 
-    return src_vocab, tgt_vocab, False
+    return src_vocab, tgt_vocab, False          # load_vocab in data_loader.py
 
 
 
@@ -115,31 +115,31 @@ if __name__ == '__main__':
     # Load configuration setting in training.
     train_config = saved_data['config']
 
-    src_vocab, tgt_vocab, is_reverse = get_vocabs(train_config, config, saved_data)
+    src_vocab, tgt_vocab, is_reverse = get_vocabs(train_config, config, saved_data) # load_vocab in data_loader.py
 
     # Initialize dataloader, but we don't need to read training & test corpus.
     # What we need is just load vocabularies from the previously trained model.
     loader = DataLoader()
-    loader.load_vocab(src_vocab, tgt_vocab)
+    loader.load_vocab(src_vocab, tgt_vocab) # load_vocab in data_loader.py
 
     input_size, output_size = len(loader.src.vocab), len(loader.tgt.vocab)
     model = get_model(input_size, output_size, train_config, is_reverse)
 
-    # Put models to device if it is necessary.
+
     if config.gpu_id >= 0:
         model.cuda(config.gpu_id)
 
     with torch.no_grad():
         # Get sentences from standard input.
-        for lines in read_text(batch_size=config.batch_size):
+        for lines in read_text(batch_size=config.batch_size): # lines: raw text with bpe splited by " "
             # Since packed_sequence must be sorted by decreasing order of length,
             # sorting by length in mini-batch should be restored by original order.
             # Therefore, we need to memorize the original index of the sentence.
-            lengths         = [len(line) for line in lines]
-            original_indice = [i for i in range(len(lines))]
+            lengths         = [len(line) for line in lines]     # #of tokens in each sample for packed sequence
+            original_indice = [i for i in range(len(lines))]    # 문장 순서 뒤바뀔 때 기억하고 있을 original index
 
             sorted_tuples = sorted(
-                zip(lines, lengths, original_indice),
+                zip(lines, lengths, original_indice),           # lenght 기준, 길이가 긴것이 앞으로.
                 key=itemgetter(1),
                 reverse=True,
             )
@@ -148,22 +148,20 @@ if __name__ == '__main__':
             original_indice = [sorted_tuples[i][2] for i in range(len(sorted_tuples))]
 
             # Converts string to list of index.
-            x = loader.src.numericalize(
-                loader.src.pad(sorted_lines),
+            x = loader.src.numericalize(    # tensor (batch_size, length), one-hot index 로 만들기
+                loader.src.pad(sorted_lines),       # sorted_lines(text): list of list, 모자란 부분 pad채움
                 device='cuda:%d' % config.gpu_id if config.gpu_id >= 0 else 'cpu'
             )
-            # |x| = (batch_size, length)
 
             if config.beam_size == 1:
                 y_hats, indice = model.search(x)
-                # |y_hats| = (batch_size, length, output_size)
-                # |indice| = (batch_size, length)
 
-                output = to_text(indice, loader.tgt.vocab)
-                sorted_tuples = sorted(zip(output, original_indice), key=itemgetter(1))
-                output = [sorted_tuples[i][0] for i in range(len(sorted_tuples))]
+                output = to_text(indice, loader.tgt.vocab)  # 길이가 긴 순서대로 sorting된 output 이므로               
+                sorted_tuples = sorted(zip(output, original_indice), key=itemgetter(1)) # 원래 순서대로 sorting
+                output = [sorted_tuples[i][0] for i in range(len(sorted_tuples))]   # 튜플에서 원하는 출력만 받아옴
 
-                sys.stdout.write('\n'.join(output) + '\n')
+                sys.stdout.write('\n'.join(output) + '\n')  # 미니배치단위로 for문, 현재 iteration 결과받고 다음 iteration결과..
+            
             else:
                 
                 batch_indice, _ = model.batch_beam_search(

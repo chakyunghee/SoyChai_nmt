@@ -24,7 +24,7 @@ class MaximumLikelihoodEstimationEngine(Engine):    # teacher forcing으로 모�
         super().__init__(func)
 
         self.best_loss = np.inf
-        self.scaler = GradScaler()          # amp. autocast.
+        self.scaler = GradScaler()          ## amp. autocast. scaler
 
     @staticmethod                           # process function(ignite에 등록)
     def train(engine, mini_batch):          # gradient accumulation(마치 배치사이즈 큰 것처럼)
@@ -40,16 +40,17 @@ class MaximumLikelihoodEstimationEngine(Engine):    # teacher forcing으로 모�
 
         x, y = mini_batch.src, mini_batch.tgt[0][:, 1:]         # 정답인 애, <bos> 뺀 애, <eos> 포함
 
-        with autocast(not engine.config.off_autocast):          # amp, gpu working only
-            y_hat = engine.model(x, mini_batch.tgt[0][:, :-1])  # 모델에 넣어줌, <eos> 뺌
-            loss = engine.crit(                                 # 실제 화면 출력 loss, 여기서 정답과 y_hat비교
-                y_hat.contiguous().view(-1, y_hat.size(-1)),
-                y.contiguous().view(-1)
-            )                                                   # train.py 에 crit의 reduction=sum이라 나눠주기
-            backward_target = loss.div(y.size(0)).div(engine.config.iteration_per_update) # <-- gradient descent 수행 back porp할 애.
-
+        with autocast(not engine.config.off_autocast):          ## amp적용 시작   
+            # runs the forward pass with autocasting
+            y_hat = engine.model(x, mini_batch.tgt[0][:, :-1])  ## (fp16) 모델에 넣어줌, <eos> 뺌
+            loss = engine.crit(                                 ## (fp16) 화면 출력 loss, 여기서 정답과 y_hat비교
+                y_hat.contiguous().view(-1, y_hat.size(-1)),    ## output
+                y.contiguous().view(-1)                         ## target
+            )                                                   
+            backward_target = loss.div(y.size(0)).div(engine.config.iteration_per_update)   # gradient descent 수행 back porp할 애.
+                                                                                            # train.py 에 crit의 reduction=sum이라 나눠주기                                  
         if engine.config.gpu_id >= 0 and not engine.config.off_autocast:
-            engine.scaler.scale(backward_target).backward()     # 안정적 backprop
+            engine.scaler.scale(backward_target).backward()     ## loss scaling (fp16범위내로) 후 backward 호출
         else:
             backward_target.backward()
 
@@ -63,8 +64,8 @@ class MaximumLikelihoodEstimationEngine(Engine):    # teacher forcing으로 모�
                 engine.config.max_grad_norm
             )
             if engine.config.gpu_id >= 0 and engine.config.off_autocast:
-                engine.scaler.step(engine.optimizer)
-                engine.scaler.update()  
+                engine.scaler.step(engine.optimizer)            ## optimizer가 step할 때에도 scaler가 step
+                engine.scaler.update()                          ## 다음번에 어떻게 scaling할지 업뎃
             else:
                 engine.optimizer.step()
 
