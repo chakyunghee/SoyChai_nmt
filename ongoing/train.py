@@ -17,7 +17,8 @@ from simple_nmt.models.transformer import Transformer
 from simple_nmt.trainer import SingleTrainer
 #from simple_nmt.rl_trainer import MinimumRiskTrainingEngine
 from simple_nmt.trainer import MaximumLikelihoodEstimationEngine
-
+import wandb
+wandb.init(project="NMT_back_translation_2", entity="chakyunghee")
 
 def define_argparser(is_continue=False):    # parameter들이 이런게 있구나.하고 보기
     p = argparse.ArgumentParser()
@@ -211,6 +212,7 @@ def define_argparser(is_continue=False):    # parameter들이 이런게 있구�
     )
 
     config = p.parse_args()
+    wandb.config.update(config)
 
     return config
 
@@ -315,6 +317,7 @@ def main(config, model_weight=None, opt_weight=None):  # config받아서 main함
         crit.cuda(config.gpu_id)
 
     optimizer = get_optimizer(model, config)
+    wandb.watch(model)
 
     if opt_weight is not None and (config.use_adam or config.use_radam):
         optimizer.load_state_dict(opt_weight)

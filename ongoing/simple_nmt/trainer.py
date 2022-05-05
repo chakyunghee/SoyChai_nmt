@@ -12,7 +12,7 @@ from ignite.metrics import RunningAverage
 from ignite.contrib.handlers.tqdm_logger import ProgressBar
 
 from simple_nmt.utils import get_grad_norm, get_parameter_norm
-
+import wandb
 
 VERBOSE_SILENT = 0
 VERBOSE_EPOCH_WISE = 1
@@ -94,6 +94,8 @@ class MaximumLikelihoodEstimationEngine(Engine):
                                         # 여기부분 코드가 다름(빠짐, use_noam_decay, lr_scheduler)
         loss = float(loss / word_count) # 단어당 loss
         ppl = np.exp(loss)   # Perplexity
+        
+        wandb.log({'current epoch': engine.state.epoch, 'train_loss': loss, 'train_ppl': ppl})
 
         return {
             'loss': loss,
@@ -126,6 +128,8 @@ class MaximumLikelihoodEstimationEngine(Engine):
         word_count = int(mini_batch.tgt[1].sum())
         loss = float(loss / word_count)
         ppl = np.exp(loss)
+
+        wandb.log({'current epoch': engine.state.epoch, 'valid_loss': loss, 'valid_ppl': ppl})
 
         return {
             'loss': loss,
