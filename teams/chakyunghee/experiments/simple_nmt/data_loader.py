@@ -1,26 +1,33 @@
 import os
 import torchtext
-from torchtext import data, datasets
 from torchtext.legacy import data
+#from torchtext import data
+#version = list(map(int, torchtext.__version__.split('.')))
+#if version[0] <= 0 and version[1] < 9:
+#    from torchtext import data
+#else:
+#    from torchtext.legacy import data
 
 PAD, BOS, EOS = 1, 2, 3
+
 
 class DataLoader():
 
     def __init__(self,
                  train_fn=None,
                  valid_fn=None,
-                 exts=None,         # TranslationDataset
+                 exts=None,
                  batch_size=64,
                  device='cpu',
                  max_vocab=99999999,
                  max_length=255,
-                 fix_length=None,   # <---?
+                 fix_length=None,
                  use_bos=True,
                  use_eos=True,
-                 shuffle=True
+                 shuffle=True,
+                 dsl=False
                  ):
-        
+
         super(DataLoader, self).__init__()
 
         self.src = data.Field(
@@ -29,8 +36,8 @@ class DataLoader():
             batch_first=True,
             include_lengths=True,
             fix_length=fix_length,
-            init_token=None,
-            eos_token=None
+            init_token='<BOS>' if dsl else None,
+            eos_token='<EOS>' if dsl else None,  # 현재는 none
         )
 
         self.tgt = data.Field(
@@ -39,30 +46,31 @@ class DataLoader():
             batch_first=True,
             include_lengths=True,
             fix_length=fix_length,
-            init_token='<BOS>' if use_bos else None,
-            eos_token='<EOS>' if use_eos else None
+            init_token='<BOS>' if use_bos else None,  # target에서는 무조건 bos eos 필요
+            eos_token='<EOS>' if use_eos else None,
         )
 
-        if train_fn is not None and valid_fn is not None and exts is not None:      
+        if train_fn is not None and valid_fn is not None and exts is not None:
             train = TranslationDataset(
                 path=train_fn,
-                exts=exts,                                      # 확장자 en/ko (영한)튜플로.
-                fields=[('src', self.src), ('tgt', self.tgt)],  # (en, ko)
+                exts=exts,
+                fields=[('src', self.src), ('tgt', self.tgt)],
                 max_length=max_length
             )
             valid = TranslationDataset(
                 path=valid_fn,
                 exts=exts,
                 fields=[('src', self.src), ('tgt', self.tgt)],
-                max_length=max_length
+                max_length=max_length,  # max_length 벗어나는 것 제외시킴
             )
-            self.train_iter = data.BucketIterator(              # dataset 가져와서 pad채운 tensor만듦
+
+            self.train_iter = data.BucketIterator(
                 train,
                 batch_size=batch_size,
                 device='cuda:%d' % device if device >= 0 else 'cpu',
                 shuffle=shuffle,
                 sort_key=lambda x: len(x.tgt) + (max_length * len(x.src)),
-                sort_within_batch=True
+                sort_within_batch=True,
             )
             self.valid_iter = data.BucketIterator(
                 valid,
@@ -70,9 +78,10 @@ class DataLoader():
                 device='cuda:%d' % device if device >= 0 else 'cpu',
                 shuffle=False,
                 sort_key=lambda x: len(x.tgt) + (max_length * len(x.src)),
-                sort_within_batch=True
+                sort_within_batch=True,
             )
-            self.src.build_vocab(train, max_size=max_vocab)     # 단어와 index mapping
+
+            self.src.build_vocab(train, max_size=max_vocab)
             self.tgt.build_vocab(train, max_size=max_vocab)
 
     def load_vocab(self, src_vocab, tgt_vocab):
@@ -80,32 +89,34 @@ class DataLoader():
         self.tgt.vocab = tgt_vocab
 
 
-class TranslationDataset(data.Dataset):     # 문장 너무 길 때 max_length로 잘라주는 방법 적용한 코드
+class TranslationDataset(data.Dataset):
+    """Defines a dataset for machine translation."""
 
     @staticmethod
     def sort_key(ex):
-        return data.interleave_keys(len(ex.src), len(ex.trg))   # <-- trg
+        return data.interleave_keys(len(ex.src), len(ex.trg))
 
     def __init__(self, path, exts, fields, max_length=None, **kwargs):
 
         if not isinstance(fields[0], (tuple, list)):
             fields = [('src', fields[0]), ('trg', fields[1])]
-        
+
         if not path.endswith('.'):
             path += '.'
 
-        src_path, trg_path  = tuple(os.path.expanduser(path + x) for x in exts)
+        src_path, trg_path = tuple(os.path.expanduser(path + x) for x in exts)
 
         examples = []
         with open(src_path, encoding='utf-8') as src_file, open(trg_path, encoding='utf-8') as trg_file:
             for src_line, trg_line in zip(src_file, trg_file):
                 src_line, trg_line = src_line.strip(), trg_line.strip()
-                if max_length and max_length < max(len(src_line.strip()), len(trg_line.split())):
+                if max_length and max_length < max(len(src_line.split()), len(trg_line.split())):
                     continue
                 if src_line != '' and trg_line != '':
                     examples += [data.Example.fromlist([src_line, trg_line], fields)]
-        
+
         super().__init__(examples, fields, **kwargs)
+
 
 if __name__ == '__main__':
     import sys
@@ -115,6 +126,7 @@ if __name__ == '__main__':
         (sys.argv[3], sys.argv[4]),
         batch_size=128
     )
+
     print(len(loader.src.vocab))
     print(len(loader.tgt.vocab))
 

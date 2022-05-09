@@ -1,5 +1,7 @@
 import numpy as np
+
 import torch
+from torch import optim
 import torch.nn.utils as torch_utils
 from torch.cuda.amp import autocast
 from torch.cuda.amp import GradScaler

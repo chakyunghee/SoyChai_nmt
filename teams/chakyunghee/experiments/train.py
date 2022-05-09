@@ -8,7 +8,7 @@ import torch
 from torch import optim
 import torch.nn as nn
 
-from transformers import get_linear_schedule_with_warmup
+#from transformers import get_linear_schedule_with_warmup
 import torch_optimizer as custom_optim
 
 from simple_nmt.model.transformer import Transformer
@@ -23,6 +23,7 @@ def define_argparser(is_continue=False):
 
     if is_continue:
         p.add_argument('--load_fn', required=True, help='Model file name to continue.')
+    
     p.add_argument('--model_fn', required=not is_continue, help='Model file name to save. Additional information would be annotated to the file name.')
 
     p.add_argument('--train', required=not is_continue, help='Training set file name except the extention. (ex: train.en --> train)')
@@ -98,8 +99,7 @@ def get_crit(output_size, pad_index):
 
 def get_optimizer(model, config):
     if config.use_adam:
-        if config.use_transformer:
-            optimizer = optim.Adam(model.parameters(), lr=config.lr, betas=(.9, .98)) # 논문 pre LN 수치
+        optimizer = optim.Adam(model.parameters(), lr=config.lr, betas=(.9, .98)) # 논문 pre LN 수치
 
     elif config.use_radam:
         optimizer = custom_optim.RAdam(model.parameters(), lr=config.lr)

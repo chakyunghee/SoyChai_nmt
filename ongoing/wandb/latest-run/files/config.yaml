@@ -1,0 +1,121 @@
+wandb_version: 1
+
+_wandb:
+  desc: null
+  value:
+    cli_version: 0.12.16
+    framework: ignite
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    python_version: 3.7.13
+    start_time: 1651882332
+    t:
+      1:
+      - 1
+      - 10
+      - 40
+      - 55
+      2:
+      - 1
+      - 10
+      - 40
+      - 55
+      3:
+      - 1
+      4: 3.7.13
+      5: 0.12.16
+      8:
+      - 5
+batch_size:
+  desc: null
+  value: 32
+dropout:
+  desc: null
+  value: 0.2
+gpu_id:
+  desc: null
+  value: -1
+hidden_size:
+  desc: null
+  value: 768
+init_epoch:
+  desc: null
+  value: 14
+iteration_per_update:
+  desc: null
+  value: 1
+lang:
+  desc: null
+  value: null
+load_fn:
+  desc: null
+  value: ./models/enko.bt.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.13.1.05-2.87.1.04-2.82.pth
+lr:
+  desc: null
+  value: 1.0
+lr_decay_start:
+  desc: null
+  value: 10
+lr_gamma:
+  desc: null
+  value: 0.5
+lr_step:
+  desc: null
+  value: 1
+max_grad_norm:
+  desc: null
+  value: 100000000.0
+max_length:
+  desc: null
+  value: 100
+model_fn:
+  desc: null
+  value: null
+n_epochs:
+  desc: null
+  value: 20
+n_layers:
+  desc: null
+  value: 4
+n_splits:
+  desc: null
+  value: 8
+off_autocast:
+  desc: null
+  value: false
+rl_lr:
+  desc: null
+  value: 0.01
+rl_n_epochs:
+  desc: null
+  value: 10
+rl_n_gram:
+  desc: null
+  value: 6
+rl_n_samples:
+  desc: null
+  value: 1
+rl_reward:
+  desc: null
+  value: gleu
+train:
+  desc: null
+  value: null
+use_adam:
+  desc: null
+  value: false
+use_radam:
+  desc: null
+  value: false
+use_transformer:
+  desc: null
+  value: false
+valid:
+  desc: null
+  value: null
+verbose:
+  desc: null
+  value: 2
+word_vec_size:
+  desc: null
+  value: 512

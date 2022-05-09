@@ -1,0 +1,33 @@
+{
+    "os": "Linux-5.4.188+-x86_64-with-Ubuntu-18.04-bionic",
+    "python": "3.7.13",
+    "heartbeatAt": "2022-05-07T00:08:06.918692",
+    "startedAt": "2022-05-07T00:08:03.319445",
+    "docker": null,
+    "gpu": "Tesla P100-PCIE-16GB",
+    "gpu_count": 1,
+    "cpu_count": 8,
+    "cuda": null,
+    "args": [
+        "--load_fn",
+        "./models/enko.bt.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.13.1.05-2.87.1.04-2.82.pth",
+        "--init_epoch",
+        "8",
+        "--n_epochs",
+        "20",
+        "--max_grad_norm",
+        "1e+8"
+    ],
+    "state": "running",
+    "program": "continue_train.py",
+    "codePath": "ongoing/continue_train.py",
+    "git": {
+        "remote": "https://github.com/chakyunghee/SoyChai_nmt.git",
+        "commit": "cb32a6218a52f975a1a7d2c4ac8aa78cbf02a9fa"
+    },
+    "email": "datascience.ckh@gmail.com",
+    "root": "/content/SoyChai_nmt",
+    "host": "50fa56311b10",
+    "username": "root",
+    "executable": "/usr/bin/python3"
+}
