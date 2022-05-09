@@ -1,1 +1,349 @@
 create some files from modeling's results example images, logging, binary files etc...
+
+
+python train.py --train /content/SoyChai_nmt/data/train.tok.bpe --valid /content/SoyChai_nmt/data/valid.tok.bpe --lang enko --gpu_id 0 --batch_size 128 --n_epochs 20 --max_length 64 --dropout .2 --hidden_size 768 --n_layers 4 --max_grad_norm 1e+8 --iteration_per_update 32 --lr 1e-3 --lr_step 0 --use_adam --use_transformer --model_fn /content/SoyChai_nmt/teams/chakyunghee/experiments/models/enko.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.pth
+{   'batch_size': 128,
+    'dropout': 0.2,
+    'gpu_id': 0,
+    'hidden_size': 768,
+    'init_epoch': 1,
+    'iteration_per_update': 32,
+    'lang': 'enko',
+    'lr': 0.001,
+    'lr_step': 0,
+    'max_grad_norm': 100000000.0,
+    'max_length': 64,
+    'model_fn': '/content/SoyChai_nmt/teams/chakyunghee/experiments/models/enko.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.pth',
+    'n_epochs': 20,
+    'n_layers': 4,
+    'n_splits': 8,
+    'off_autocast': False,
+    'train': '/content/SoyChai_nmt/data/train.tok.bpe',
+    'use_adam': True,
+    'use_radam': False,
+    'use_transformer': True,
+    'valid': '/content/SoyChai_nmt/data/valid.tok.bpe',
+    'verbose': 2}
+Transformer(
+  (emb_enc): Embedding(20286, 768)
+  (emb_dec): Embedding(26490, 768)
+  (emb_dropout): Dropout(p=0.2, inplace=False)
+  (encoder): MySequential(
+    (0): EncoderBlock(
+      (attn): MultiHead(
+        (Q_linear): Linear(in_features=768, out_features=768, bias=False)
+        (K_linear): Linear(in_features=768, out_features=768, bias=False)
+        (V_linear): Linear(in_features=768, out_features=768, bias=False)
+        (linear): Linear(in_features=768, out_features=768, bias=False)
+        (attn): Attention(
+          (softmax): Softmax(dim=-1)
+        )
+      )
+      (attn_norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      (attn_dropout): Dropout(p=0.2, inplace=False)
+      (fc): Sequential(
+        (0): Linear(in_features=768, out_features=3072, bias=True)
+        (1): ReLU()
+        (2): Linear(in_features=3072, out_features=768, bias=True)
+      )
+      (fc_norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      (fc_dropout): Dropout(p=0.2, inplace=False)
+    )
+    (1): EncoderBlock(
+      (attn): MultiHead(
+        (Q_linear): Linear(in_features=768, out_features=768, bias=False)
+        (K_linear): Linear(in_features=768, out_features=768, bias=False)
+        (V_linear): Linear(in_features=768, out_features=768, bias=False)
+        (linear): Linear(in_features=768, out_features=768, bias=False)
+        (attn): Attention(
+          (softmax): Softmax(dim=-1)
+        )
+      )
+      (attn_norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      (attn_dropout): Dropout(p=0.2, inplace=False)
+      (fc): Sequential(
+        (0): Linear(in_features=768, out_features=3072, bias=True)
+        (1): ReLU()
+        (2): Linear(in_features=3072, out_features=768, bias=True)
+      )
+      (fc_norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      (fc_dropout): Dropout(p=0.2, inplace=False)
+    )
+    (2): EncoderBlock(
+      (attn): MultiHead(
+        (Q_linear): Linear(in_features=768, out_features=768, bias=False)
+        (K_linear): Linear(in_features=768, out_features=768, bias=False)
+        (V_linear): Linear(in_features=768, out_features=768, bias=False)
+        (linear): Linear(in_features=768, out_features=768, bias=False)
+        (attn): Attention(
+          (softmax): Softmax(dim=-1)
+        )
+      )
+      (attn_norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      (attn_dropout): Dropout(p=0.2, inplace=False)
+      (fc): Sequential(
+        (0): Linear(in_features=768, out_features=3072, bias=True)
+        (1): ReLU()
+        (2): Linear(in_features=3072, out_features=768, bias=True)
+      )
+      (fc_norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      (fc_dropout): Dropout(p=0.2, inplace=False)
+    )
+    (3): EncoderBlock(
+      (attn): MultiHead(
+        (Q_linear): Linear(in_features=768, out_features=768, bias=False)
+        (K_linear): Linear(in_features=768, out_features=768, bias=False)
+        (V_linear): Linear(in_features=768, out_features=768, bias=False)
+        (linear): Linear(in_features=768, out_features=768, bias=False)
+        (attn): Attention(
+          (softmax): Softmax(dim=-1)
+        )
+      )
+      (attn_norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      (attn_dropout): Dropout(p=0.2, inplace=False)
+      (fc): Sequential(
+        (0): Linear(in_features=768, out_features=3072, bias=True)
+        (1): ReLU()
+        (2): Linear(in_features=3072, out_features=768, bias=True)
+      )
+      (fc_norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      (fc_dropout): Dropout(p=0.2, inplace=False)
+    )
+  )
+  (decoder): MySequential(
+    (0): DecoderBlock(
+      (masked_attn): MultiHead(
+        (Q_linear): Linear(in_features=768, out_features=768, bias=False)
+        (K_linear): Linear(in_features=768, out_features=768, bias=False)
+        (V_linear): Linear(in_features=768, out_features=768, bias=False)
+        (linear): Linear(in_features=768, out_features=768, bias=False)
+        (attn): Attention(
+          (softmax): Softmax(dim=-1)
+        )
+      )
+      (masked_attn_norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      (masked_attn_dropout): Dropout(p=0.2, inplace=False)
+      (attn): MultiHead(
+        (Q_linear): Linear(in_features=768, out_features=768, bias=False)
+        (K_linear): Linear(in_features=768, out_features=768, bias=False)
+        (V_linear): Linear(in_features=768, out_features=768, bias=False)
+        (linear): Linear(in_features=768, out_features=768, bias=False)
+        (attn): Attention(
+          (softmax): Softmax(dim=-1)
+        )
+      )
+      (attn_norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      (attn_dropout): Dropout(p=0.2, inplace=False)
+      (fc): Sequential(
+        (0): Linear(in_features=768, out_features=3072, bias=True)
+        (1): ReLU()
+        (2): Linear(in_features=3072, out_features=768, bias=True)
+      )
+      (fc_norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      (fc_dropout): Dropout(p=0.2, inplace=False)
+    )
+    (1): DecoderBlock(
+      (masked_attn): MultiHead(
+        (Q_linear): Linear(in_features=768, out_features=768, bias=False)
+        (K_linear): Linear(in_features=768, out_features=768, bias=False)
+        (V_linear): Linear(in_features=768, out_features=768, bias=False)
+        (linear): Linear(in_features=768, out_features=768, bias=False)
+        (attn): Attention(
+          (softmax): Softmax(dim=-1)
+        )
+      )
+      (masked_attn_norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      (masked_attn_dropout): Dropout(p=0.2, inplace=False)
+      (attn): MultiHead(
+        (Q_linear): Linear(in_features=768, out_features=768, bias=False)
+        (K_linear): Linear(in_features=768, out_features=768, bias=False)
+        (V_linear): Linear(in_features=768, out_features=768, bias=False)
+        (linear): Linear(in_features=768, out_features=768, bias=False)
+        (attn): Attention(
+          (softmax): Softmax(dim=-1)
+        )
+      )
+      (attn_norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      (attn_dropout): Dropout(p=0.2, inplace=False)
+      (fc): Sequential(
+        (0): Linear(in_features=768, out_features=3072, bias=True)
+        (1): ReLU()
+        (2): Linear(in_features=3072, out_features=768, bias=True)
+      )
+      (fc_norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      (fc_dropout): Dropout(p=0.2, inplace=False)
+    )
+    (2): DecoderBlock(
+      (masked_attn): MultiHead(
+        (Q_linear): Linear(in_features=768, out_features=768, bias=False)
+        (K_linear): Linear(in_features=768, out_features=768, bias=False)
+        (V_linear): Linear(in_features=768, out_features=768, bias=False)
+        (linear): Linear(in_features=768, out_features=768, bias=False)
+        (attn): Attention(
+          (softmax): Softmax(dim=-1)
+        )
+      )
+      (masked_attn_norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      (masked_attn_dropout): Dropout(p=0.2, inplace=False)
+      (attn): MultiHead(
+        (Q_linear): Linear(in_features=768, out_features=768, bias=False)
+        (K_linear): Linear(in_features=768, out_features=768, bias=False)
+        (V_linear): Linear(in_features=768, out_features=768, bias=False)
+        (linear): Linear(in_features=768, out_features=768, bias=False)
+        (attn): Attention(
+          (softmax): Softmax(dim=-1)
+        )
+      )
+      (attn_norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      (attn_dropout): Dropout(p=0.2, inplace=False)
+      (fc): Sequential(
+        (0): Linear(in_features=768, out_features=3072, bias=True)
+        (1): ReLU()
+        (2): Linear(in_features=3072, out_features=768, bias=True)
+      )
+      (fc_norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      (fc_dropout): Dropout(p=0.2, inplace=False)
+    )
+    (3): DecoderBlock(
+      (masked_attn): MultiHead(
+        (Q_linear): Linear(in_features=768, out_features=768, bias=False)
+        (K_linear): Linear(in_features=768, out_features=768, bias=False)
+        (V_linear): Linear(in_features=768, out_features=768, bias=False)
+        (linear): Linear(in_features=768, out_features=768, bias=False)
+        (attn): Attention(
+          (softmax): Softmax(dim=-1)
+        )
+      )
+      (masked_attn_norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      (masked_attn_dropout): Dropout(p=0.2, inplace=False)
+      (attn): MultiHead(
+        (Q_linear): Linear(in_features=768, out_features=768, bias=False)
+        (K_linear): Linear(in_features=768, out_features=768, bias=False)
+        (V_linear): Linear(in_features=768, out_features=768, bias=False)
+        (linear): Linear(in_features=768, out_features=768, bias=False)
+        (attn): Attention(
+          (softmax): Softmax(dim=-1)
+        )
+      )
+      (attn_norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      (attn_dropout): Dropout(p=0.2, inplace=False)
+      (fc): Sequential(
+        (0): Linear(in_features=768, out_features=3072, bias=True)
+        (1): ReLU()
+        (2): Linear(in_features=3072, out_features=768, bias=True)
+      )
+      (fc_norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      (fc_dropout): Dropout(p=0.2, inplace=False)
+    )
+  )
+  (generator): Sequential(
+    (0): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+    (1): Linear(in_features=768, out_features=26490, bias=True)
+    (2): LogSoftmax(dim=-1)
+  )
+)
+NLLLoss()
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.98)
+    eps: 1e-08
+    lr: 0.001
+    weight_decay: 0
+)
+Epoch 1 - loss=3.8061e+00 ppl=44.98
+Validation - loss=3.8299e+00 ppl=46.06 best_loss=inf best_ppl=inf
+Epoch 2 - loss=3.0900e+00 ppl=21.98
+Validation - loss=3.1192e+00 ppl=22.63 best_loss=3.8299e+00 best_ppl=46.06
+Epoch 3 - loss=1.9212e+00 ppl=6.83
+Validation - loss=1.9256e+00 ppl=6.86 best_loss=3.1192e+00 best_ppl=22.63
+Epoch 4 - loss=1.4915e+00 ppl=4.44
+Validation - loss=1.4768e+00 ppl=4.38 best_loss=1.9256e+00 best_ppl=6.86
+Epoch 5 - loss=1.3453e+00 ppl=3.84
+Validation - loss=1.3324e+00 ppl=3.79 best_loss=1.4768e+00 best_ppl=4.38
+Epoch 6 - loss=1.2427e+00 ppl=3.46
+Validation - loss=1.2544e+00 ppl=3.51 best_loss=1.3324e+00 best_ppl=3.79
+Epoch 7 - loss=1.1637e+00 ppl=3.20
+Validation - loss=1.2077e+00 ppl=3.35 best_loss=1.2544e+00 best_ppl=3.51
+Epoch 8 - loss=1.1136e+00 ppl=3.05
+Validation - loss=1.1710e+00 ppl=3.23 best_loss=1.2077e+00 best_ppl=3.35
+Epoch 9 - loss=1.0781e+00 ppl=2.94
+Validation - loss=1.1455e+00 ppl=3.14 best_loss=1.1710e+00 best_ppl=3.23
+Epoch 10 - loss=1.0384e+00 ppl=2.82
+Validation - loss=1.1283e+00 ppl=3.09 best_loss=1.1455e+00 best_ppl=3.14
+Epoch 11 - loss=1.0080e+00 ppl=2.74
+Validation - loss=1.1127e+00 ppl=3.04 best_loss=1.1283e+00 best_ppl=3.09
+Epoch 12 - loss=9.7438e-01 ppl=2.65
+Validation - loss=1.0994e+00 ppl=3.00 best_loss=1.1127e+00 best_ppl=3.04
+Epoch 13 - loss=9.5861e-01 ppl=2.61
+Validation - loss=1.0932e+00 ppl=2.98 best_loss=1.0994e+00 best_ppl=3.00
+Epoch 14 - loss=9.4504e-01 ppl=2.57
+Validation - loss=1.0825e+00 ppl=2.95 best_loss=1.0932e+00 best_ppl=2.98
+Epoch 15 - loss=9.2212e-01 ppl=2.51
+Validation - loss=1.0757e+00 ppl=2.93 best_loss=1.0825e+00 best_ppl=2.95
+Epoch 16 - loss=9.1582e-01 ppl=2.50
+Validation - loss=1.0732e+00 ppl=2.92 best_loss=1.0757e+00 best_ppl=2.93
+Epoch 17 - loss=8.8635e-01 ppl=2.43
+Validation - loss=1.0726e+00 ppl=2.92 best_loss=1.0732e+00 best_ppl=2.92
+Epoch 18 - loss=8.7676e-01 ppl=2.40
+Validation - loss=1.0678e+00 ppl=2.91 best_loss=1.0726e+00 best_ppl=2.92
+Epoch 19 - loss=8.6516e-01 ppl=2.38
+Validation - loss=1.0649e+00 ppl=2.90 best_loss=1.0678e+00 best_ppl=2.91
+Epoch 20 - loss=8.4092e-01 ppl=2.32
+Validation - loss=1.0660e+00 ppl=2.90 best_loss=1.0649e+00 best_ppl=2.90
+
+
+
+---model weight files-------------------------------------------------------------------------------------------------------------------------------------------------
+/content/SoyChai_nmt/teams/chakyunghee/experiments/models# ll
+total 24416088
+drwxr-xr-x 2 root root       4096 May  9 09:20 ./
+drwxr-xr-x 4 root root       4096 May  9 04:24 ../
+-rw-r--r-- 1 root root 1470703821 May  9 04:43 enko.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.01.3.81-44.98.3.83-46.06.pth
+-rw-r--r-- 1 root root 1470703949 May  9 05:01 enko.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.02.3.09-21.98.3.12-22.63.pth
+-rw-r--r-- 1 root root 1470703949 May  9 05:18 enko.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.03.1.92-6.83.1.93-6.86.pth
+-rw-r--r-- 1 root root 1470703949 May  9 05:35 enko.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.04.1.49-4.44.1.48-4.38.pth
+-rw-r--r-- 1 root root 1470703949 May  9 05:52 enko.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.05.1.35-3.84.1.33-3.79.pth
+-rw-r--r-- 1 root root 1470703949 May  9 06:10 enko.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.06.1.24-3.46.1.25-3.51.pth
+-rw-r--r-- 1 root root 1470703949 May  9 06:27 enko.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.07.1.16-3.20.1.21-3.35.pth
+-rw-r--r-- 1 root root 1470703949 May  9 06:44 enko.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.08.1.11-3.05.1.17-3.23.pth
+-rw-r--r-- 1 root root 1470703949 May  9 07:02 enko.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.09.1.08-2.94.1.15-3.14.pth
+-rw-r--r-- 1 root root 1470703949 May  9 07:19 enko.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.10.1.04-2.82.1.13-3.09.pth
+-rw-r--r-- 1 root root 1470703949 May  9 07:36 enko.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.11.1.01-2.74.1.11-3.04.pth
+-rw-r--r-- 1 root root 1470703949 May  9 07:54 enko.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.12.0.97-2.65.1.10-3.00.pth
+-rw-r--r-- 1 root root 1470703949 May  9 08:11 enko.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.13.0.96-2.61.1.09-2.98.pth
+-rw-r--r-- 1 root root 1470703949 May  9 08:28 enko.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.14.0.95-2.57.1.08-2.95.pth
+-rw-r--r-- 1 root root 1470703949 May  9 08:45 enko.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.15.0.92-2.51.1.08-2.93.pth
+-rw-r--r-- 1 root root 1470703949 May  9 09:03 enko.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.16.0.92-2.50.1.07-2.92.pth
+-rw-r--r-- 1 root root 1470703949 May  9 09:20 enko.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.17.0.89-2.43.1.07-2.92.pth
+-rw-r--r-- 1 root root 1470703949 May  9 09:37 enko.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.18.0.88-2.40.1.07-2.91.pth
+-rw-r--r-- 1 root root 1470703949 May  9 09:54 enko.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.19.0.87-2.38.1.06-2.90.pth
+-rw-r--r-- 1 root root 1470703949 May  9 10:12 enko.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.20.0.84-2.32.1.07-2.90.pth
+
+
+
+---inference----------------------------------------------------------------------------------------------------------------------------------------------------------
+(input)
+/content/SoyChai_nmt/teams/chakyunghee/preprocess# head -n 5 /content/SoyChai_nmt/data/test.tok.bpe.head-1000.en | python detokenizer.py
+Considering the type regarding the Internet without borders, it is evaluated being a instance of expanding the application of copyright law outside of the US regardless of the territorial nature of the copyright law.
+The following discussion is needed to resolve the suggestions suggested by learners.
+Some studies on the period after the savings bank insolvency in 2011 have been conducted.
+In selecting a company's growth measurement method, it was attempted to exclude the method that yielded biased results according to the size of the company.
+Among solo travelers, 52.3% were female and 47.7% male, indicating that females were relatively active in traveling alone.
+
+(machine translation) - 17 epoch model weight
+/content/SoyChai_nmt/teams/chakyunghee/experiments# head -n 5 /content/SoyChai_nmt/data/test.tok.bpe.head-1000.en | python translate.py --model_fn /content/SoyChai_nmt/teams/chakyunghee/experiments/models/enko.transformer.bs-128.max_length-64.dropout-2.hs-768.n_layers-4.iter_per_update-32.adam.17.0.89-2.43.1.07-2.92.pth --gpu_id 0 --batch_size 2 --beam_size 1 | python /content/SoyChai_nmt/teams/chakyunghee/preprocess/detokenizer.py
+국경 없는 인터넷의 유형을 고려하여 저작권법의 영역성과 상관없이 미국 외에서 저작권법을 적용하는 것을 확장한 사례로 평가된다.
+학습자가 제시한 제안을 해소하기 위해서는 다음과 같은 논의가 필요하다.
+2011년 저축은행 부실 이후 기간에 대한 연구가 일부 진행되었다.
+기업의 성장 측정 방법을 선택함에 있어 기업 규모에 따라 편향된 결과를 도출하는 방법을 배제하고자 하였다.
+나홀로 여행자 중 여성이 52.3%, 남성이 47.7%로 여성이 혼자 여행에 적극적인 것으로 나타났다.
+
+(reference)
+/content/SoyChai_nmt/teams/chakyunghee/preprocess# head -n 5 /content/SoyChai_nmt/data/test.tok.bpe.head-1000.ko | python detokenizer.py
+국경 없는 인터넷의 특 성을 감안하여, 저작권법의 속지적인 특성에도 불구하고 미국 저작권법 역외적용을 확대한사례라고 평가되고 있다.
+학습자들이 제시한 건의사항을 해결하기 위해 다음과 같은 논의가 필요하다.
+2011년에 발생한 저축은행 부실사태 이후 관련 연구가 종종 이뤄지고 있다.
+기업의 성장 측정 방식을 선택함에 있어 기업 규모에 따른 편향적인 결과가 도출되는 방식은 배제하고자 하였다.
+1인 여행객 중 여성은 52.3%, 남성은 47.7%로 여성이 상대적으로 나 홀로 여행에 적극적인 것으로 나타났다.
+

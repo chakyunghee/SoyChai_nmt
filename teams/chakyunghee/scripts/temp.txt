@@ -41,5 +41,3 @@ src.vocab size and tgt.vocab size were wrong values. data_loader.py file has bee
 next procedure is in the ongoing folder.
 
 
-
-
